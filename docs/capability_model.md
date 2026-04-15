@@ -26,9 +26,10 @@ The permission bits currently tracked are:
 The prototype is intentionally small, but it already preserves the behaviors we care about:
 
 - A capability cannot be minted for an unknown object.
-- A capability cannot be transferred unless the source capability includes `transfer`.
+- A capability cannot be transferred unless the Fortran policy layer approves the delegation.
 - Introspection is represented as a distinct permission rather than folded into general read access.
 - Ownership is explicit, which keeps transfer semantics easy to reason about.
+- Capability risk is surfaced through a Fortran audit score during introspection.
 
 ## Design Direction
 
@@ -49,4 +50,3 @@ As Aurora moves beyond the host prototype, the next changes should be:
 3. make capabilities opaque outside the kernel
 4. route introspection through inspect-only capabilities
 5. add revocation hooks to the live module loader
-

@@ -3,7 +3,7 @@
 Aurora is currently a host-runnable prototype that exercises the operating system's core ideas before the project grows into a freestanding kernel. The implementation is intentionally split along the same boundaries described in the main README:
 
 - Zig owns low-level mechanism, object management, IPC, live module registration, and runtime inspection.
-- Fortran owns policy-oriented services such as scheduler heuristics and the minimal runtime surface we expect to call from the kernel.
+- Fortran owns policy-oriented services such as scheduler heuristics, capability delegation rules, telemetry scoring, and the minimal runtime surface we expect to call from the kernel.
 - Assembly remains isolated to architecture entry points and trap veneers so bring-up work can happen without polluting the higher-level code paths.
 
 ## Prototype Layers
@@ -16,6 +16,7 @@ The current executable is a transparent kernel simulator:
 - It models endpoint-based IPC with queue depth tracking.
 - It records memory regions and exposes them through runtime inspection.
 - It supports live replacement of kernel services through a hot-swappable module table.
+- It routes scheduling, capability policy, and telemetry scoring through Fortran code.
 
 This gives us a concrete place to evolve interfaces while the freestanding boot path is still forming.
 
@@ -50,4 +51,3 @@ Building the interfaces first makes the later freestanding work less risky:
 3. Compile the Fortran scheduler into the Zig build graph.
 4. Replace the host-only endpoint queue with kernel message rings.
 5. Add a serial console and structured debug channel for early boot.
-

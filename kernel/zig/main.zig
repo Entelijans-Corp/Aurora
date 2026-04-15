@@ -92,6 +92,8 @@ test {
     _ = @import("core/capability.zig");
     _ = @import("core/ipc.zig");
     _ = @import("loader/module_loader.zig");
+    _ = @import("policy/fortran_capability.zig");
+    _ = @import("policy/fortran_telemetry.zig");
 }
 
 test "fortran scheduler computes a contention-aware timeslice" {

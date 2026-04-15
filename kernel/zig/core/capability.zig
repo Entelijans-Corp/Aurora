@@ -9,9 +9,13 @@ pub const Permissions = packed struct(u8) {
     execute: bool = false,
     _reserved: u2 = 0,
 
+    pub fn mask(self: Permissions) u8 {
+        return @bitCast(self);
+    }
+
     pub fn includes(self: Permissions, other: Permissions) bool {
-        const have: u8 = @bitCast(self);
-        const required: u8 = @bitCast(other);
+        const have = self.mask();
+        const required = other.mask();
         return (have & required) == required;
     }
 

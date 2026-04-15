@@ -5,6 +5,8 @@ const ipc = @import("ipc.zig");
 const object_mod = @import("object.zig");
 const module_loader = @import("../loader/module_loader.zig");
 const address_space = @import("../memory/address_space.zig");
+const fortran_capability = @import("../policy/fortran_capability.zig");
+const fortran_telemetry = @import("../policy/fortran_telemetry.zig");
 const platform = @import("../arch/platform.zig");
 
 pub const KernelConfig = struct {
@@ -121,7 +123,7 @@ pub const Kernel = struct {
         }
 
         const source = self.getCapability(capability_id) orelse return error.UnknownCapability;
-        if (!source.permissions.transfer) {
+        if (!fortran_capability.canTransfer(source, new_owner_process_id)) {
             return error.TransferDenied;
         }
 
@@ -189,12 +191,25 @@ pub const Kernel = struct {
         try introspection.render(writer, .{
             .architecture = platform.describe(self.config.architecture),
             .scheduler_ticks = self.scheduler_ticks,
+            .telemetry_profile = self.telemetryProfile(),
             .objects = self.objects.items,
             .capabilities = self.capabilities.items,
             .endpoints = self.endpoints.items,
             .regions = self.address_space_map.items(),
             .modules = self.modules.items(),
         });
+    }
+
+    pub fn telemetryProfile(self: *const Kernel) fortran_telemetry.KernelProfile {
+        return fortran_telemetry.computeKernelProfile(
+            self.objects.items.len,
+            self.capabilities.items.len,
+            self.endpoints.items.len,
+            self.address_space_map.items().len,
+            self.modules.items().len,
+            self.totalQueuedMessages(),
+            self.scheduler_ticks,
+        );
     }
 
     fn getCapability(self: *const Kernel, capability_id: u32) ?capability_mod.Capability {
@@ -235,6 +250,22 @@ test "capabilities can be transferred across processes" {
     try std.testing.expectEqual(endpoint, delegated.object_id);
     try std.testing.expectEqual(shell_pid, delegated.owner_process_id);
     try std.testing.expectEqual(root_capability.generation + 1, delegated.generation);
+}
+
+test "fortran capability policy denies self-transfer" {
+    var kernel = try Kernel.init(std.testing.allocator, .{});
+    defer kernel.deinit();
+
+    const init_pid = try kernel.createObject(.process, "init", null);
+    const endpoint = try kernel.createObject(.endpoint, "control", init_pid);
+
+    const root_capability = try kernel.mintCapability(init_pid, endpoint, .{
+        .read = true,
+        .write = true,
+        .transfer = true,
+    });
+
+    try std.testing.expectError(error.TransferDenied, kernel.transferCapability(root_capability.id, init_pid));
 }
 
 test "services can be hot swapped" {
