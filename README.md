@@ -25,7 +25,7 @@ Included now:
 - kernel object and capability management
 - endpoint-style IPC with queue tracking
 - a hot-swappable module loader for live service replacement
-- a Fortran scheduler policy stub in `kernel/fortran/scheduler/round_robin.f90`
+- a Fortran scheduler policy linked directly into the Zig build from `kernel/fortran/scheduler/round_robin.f90`
 - a minimal Fortran runtime shim in `runtime/fortran_min/aurora_runtime.f90`
 - ppc64 assembly placeholders for boot and trap entry
 
@@ -106,6 +106,12 @@ To use the helper script:
 .\tools\build\build.ps1 -Run
 ```
 
+To drive the Linux toolchain from Windows through WSL2:
+
+```powershell
+.\tools\build\build-wsl.ps1 -Run
+```
+
 To compile the Fortran pieces independently:
 
 ```powershell
@@ -123,6 +129,7 @@ Working in code today:
 - object registration
 - IPC queue modeling
 - live module replacement
+- Zig calling into a Fortran scheduler policy
 - transparent kernel inspection
 
 Still ahead:
@@ -142,4 +149,3 @@ Aurora keeps a strict mechanism-versus-policy split:
 - Assembly handles hardware entry
 
 That separation is already reflected in the repo layout so the system can scale without collapsing into one monolithic kernel tree.
-

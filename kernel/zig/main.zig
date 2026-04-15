@@ -1,6 +1,7 @@
 const std = @import("std");
 const capability_mod = @import("core/capability.zig");
 const Kernel = @import("core/kernel.zig").Kernel;
+const fortran_scheduler = @import("policy/fortran_scheduler.zig");
 
 fn bootstrapScheduler(context: *anyopaque) !void {
     const kernel: *Kernel = @ptrCast(@alignCast(context));
@@ -9,7 +10,8 @@ fn bootstrapScheduler(context: *anyopaque) !void {
 
 fn transparentScheduler(context: *anyopaque) !void {
     const kernel: *Kernel = @ptrCast(@alignCast(context));
-    kernel.noteSchedulerTick(4);
+    const timeslice = fortran_scheduler.computeTimeslice(kernel.totalQueuedMessages(), 4);
+    kernel.noteSchedulerTick(timeslice);
 }
 
 pub fn main() !void {
@@ -90,4 +92,10 @@ test {
     _ = @import("core/capability.zig");
     _ = @import("core/ipc.zig");
     _ = @import("loader/module_loader.zig");
+}
+
+test "fortran scheduler computes a contention-aware timeslice" {
+    try std.testing.expectEqual(@as(usize, 4), fortran_scheduler.computeTimeslice(1, 4));
+    try std.testing.expectEqual(@as(usize, 3), fortran_scheduler.computeTimeslice(2, 4));
+    try std.testing.expectEqual(@as(usize, 1), fortran_scheduler.computeTimeslice(8, 4));
 }

@@ -7,16 +7,16 @@ pub const Message = struct {
     len: u8,
     body: [max_message_bytes]u8 = [_]u8{0} ** max_message_bytes,
 
-    pub fn init(sender_process_id: u32, text: []const u8) !Message {
-        if (text.len > max_message_bytes) {
+    pub fn init(sender_process_id: u32, payload: []const u8) !Message {
+        if (payload.len > max_message_bytes) {
             return error.MessageTooLarge;
         }
 
         var message = Message{
             .sender_process_id = sender_process_id,
-            .len = @intCast(text.len),
+            .len = @intCast(payload.len),
         };
-        std.mem.copyForwards(u8, message.body[0..text.len], text);
+        std.mem.copyForwards(u8, message.body[0..payload.len], payload);
         return message;
     }
 
@@ -52,4 +52,3 @@ pub const Endpoint = struct {
         return self.queue.items.len;
     }
 };
-
